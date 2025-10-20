@@ -23,14 +23,12 @@ export async function POST(req: Request) {
     const text = result.response.text();
 
     return NextResponse.json({ reply: text });
-  } catch (error: any) {
-    console.error("Error in Gemini API:", error);
-    return NextResponse.json(
-      {
-        error: error.message || "Unknown error",
-        status: error.status || 500,
-      },
-      { status: 500 }
+  } catch (error: unknown) {
+  const err = error as Error;
+  console.error("Error in Gemini API:", err);
+  return NextResponse.json(
+    { error: err.message || "Unknown error", status: 500 },
+    { status: 500 }
     );
   }
 }
