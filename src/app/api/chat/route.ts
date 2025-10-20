@@ -4,9 +4,22 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// Interface untuk request body
+interface ChatRequest {
+  message: string;
+}
+
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const body = await req.json() as ChatRequest;
+    const { message } = body;
+
+    if (!message) {
+      return NextResponse.json(
+        { error: "Message is required" },
+        { status: 400 }
+      );
+    }
 
     if (!process.env.GEMINI_API_KEY) {
       throw new Error("Missing Gemini API key");
@@ -23,12 +36,20 @@ export async function POST(req: Request) {
     const text = result.response.text();
 
     return NextResponse.json({ reply: text });
-  } catch (error: unknown) {
-  const err = error as Error;
-  console.error("Error in Gemini API:", err);
-  return NextResponse.json(
-    { error: err.message || "Unknown error", status: 500 },
-    { status: 500 }
+  } catch (error) {
+    // Safer error handling
+    if (error instanceof Error) {
+      console.error("Error in Gemini API:", error);
+      return NextResponse.json(
+        { error: error.message, status: 500 },
+        { status: 500 }
+      );
+    }
+    
+    console.error("Unknown error:", error);
+    return NextResponse.json(
+      { error: "An unknown error occurred", status: 500 },
+      { status: 500 }
     );
   }
 }
